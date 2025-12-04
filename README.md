@@ -43,7 +43,7 @@ This is a static web application with no server-side build step. While you can o
 #### Step 2: Clone the Repository
 Open your terminal or command prompt and run:
 ```bash
-git clone https://github.com/your-username/your-repo-name.git
+git clone https://github.com/soheylarsham/political-compass-test.git
 cd your-repo-name
 ```
 (Replace the URL with your repository's URL).
@@ -163,7 +163,7 @@ Deploying on GitHub Pages is simple, but it has a major limitation: it does not 
 #### مرحله ۲: کلون کردن ریپازیتوری
 ترمینال یا خط فرمان خود را باز کرده و دستور زیر را اجرا کنید:
 ```bash
-git clone https://github.com/your-username/your-repo-name.git
+git clone https://github.com/soheylarsham/political-compass-test.git
 cd your-repo-name
 ```
 (آدرس URL را با آدرس ریپازیتوری خود جایگزین کنید).
