@@ -1,3 +1,4 @@
+
 export const DEFAULT_QUESTIONS_PER_LEVEL = 40;
 export const DEFAULT_NUMBER_OF_LEVELS = 3;
 

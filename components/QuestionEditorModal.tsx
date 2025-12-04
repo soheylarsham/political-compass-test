@@ -1,14 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
-import { type Question, type QuestionOption, MultilingualText } from '../types';
-import { useI18n } from '../contexts/I18nContext';
+import { useI18n } from '../contexts/I18nContext.tsx';
 
-interface QuestionEditorModalProps {
-    question: Question | null;
-    onSave: (question: Omit<Question, 'id' | 'enabled'>) => void;
-    onClose: () => void;
-}
-
-const emptyQuestion: Omit<Question, 'id' | 'enabled'> = {
+const emptyQuestion = {
     question: { fa: '', en: '' },
     options: [
         { text: { fa: '', en: '' }, economicScore: 0, socialScore: 0 },
@@ -18,8 +12,8 @@ const emptyQuestion: Omit<Question, 'id' | 'enabled'> = {
     ],
 };
 
-const QuestionEditorModal: React.FC<QuestionEditorModalProps> = ({ question, onSave, onClose }) => {
-    const [formData, setFormData] = useState<Omit<Question, 'id' | 'enabled'>>(emptyQuestion);
+const QuestionEditorModal = ({ question, onSave, onClose }) => {
+    const [formData, setFormData] = useState(emptyQuestion);
     const { t } = useI18n();
     
     useEffect(() => {
@@ -33,14 +27,14 @@ const QuestionEditorModal: React.FC<QuestionEditorModalProps> = ({ question, onS
         }
     }, [question]);
 
-    const handleQuestionChange = (lang: 'fa' | 'en', value: string) => {
+    const handleQuestionChange = (lang, value) => {
         setFormData(prev => ({ 
             ...prev, 
             question: { ...prev.question, [lang]: value } 
         }));
     };
 
-    const handleOptionTextChange = (index: number, lang: 'fa' | 'en', value: string) => {
+    const handleOptionTextChange = (index, lang, value) => {
         setFormData(prev => {
             const newOptions = [...prev.options];
             newOptions[index].text = { ...newOptions[index].text, [lang]: value };
@@ -48,15 +42,15 @@ const QuestionEditorModal: React.FC<QuestionEditorModalProps> = ({ question, onS
         });
     };
 
-    const handleOptionScoreChange = (index: number, field: 'economicScore' | 'socialScore', value: string) => {
+    const handleOptionScoreChange = (index, field, value) => {
          setFormData(prev => {
             const newOptions = [...prev.options];
-            (newOptions[index] as any)[field] = Number(value);
+            (newOptions[index])[field] = Number(value);
             return { ...prev, options: newOptions };
         });
     }
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = (e) => {
         e.preventDefault();
         onSave(formData);
     };

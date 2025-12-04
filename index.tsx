@@ -1,8 +1,8 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App';
-import { I18nProvider } from './contexts/I18nContext';
+import App from './App.tsx';
+import { I18nProvider } from './contexts/I18nContext.tsx';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {

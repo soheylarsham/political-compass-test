@@ -1,41 +1,42 @@
+
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import WelcomeScreen from './components/WelcomeScreen';
-import QuizScreen from './components/QuizScreen';
-import ResultsScreen from './components/ResultsScreen';
-import Header from './components/Header';
-import QuestionBankManager from './components/QuestionBankManager';
-import QuizSettingsModal from './components/QuizSettingsModal';
-import PasswordModal from './components/PasswordModal';
-import { useQuestionBank } from './hooks/useQuestionBank';
-import { generateQuestions as selectRandomQuestions } from './services/geminiService';
-import { type UserAnswer, type QuizLevel, type AnalysisResult, GameState, Question, type QuizConfig } from './types';
-import { DEFAULT_QUESTIONS_PER_LEVEL, DEFAULT_NUMBER_OF_LEVELS } from './constants';
-import { useErrorLog } from './hooks/useErrorLog';
-import ErrorLog from './components/ErrorLog';
-import { useI18n } from './contexts/I18nContext';
-import { useAuth } from './hooks/useAuth';
+import WelcomeScreen from './components/WelcomeScreen.tsx';
+import QuizScreen from './components/QuizScreen.tsx';
+import ResultsScreen from './components/ResultsScreen.tsx';
+import Header from './components/Header.tsx';
+import QuestionBankManager from './components/QuestionBankManager.tsx';
+import QuizSettingsModal from './components/QuizSettingsModal.tsx';
+import PasswordModal from './components/PasswordModal.tsx';
+import { useQuestionBank } from './hooks/useQuestionBank.ts';
+import { generateQuestions as selectRandomQuestions } from './services/geminiService.ts';
+import { GameState } from './types.ts';
+import { DEFAULT_QUESTIONS_PER_LEVEL, DEFAULT_NUMBER_OF_LEVELS } from './constants.ts';
+import { useErrorLog } from './hooks/useErrorLog.ts';
+import ErrorLog from './components/ErrorLog.tsx';
+import { useI18n } from './contexts/I18nContext.tsx';
+import { useAuth } from './hooks/useAuth.tsx';
 
-type ImportedState = { answers: UserAnswer[], result: AnalysisResult, level: QuizLevel };
-
-const App: React.FC = () => {
-  const [gameState, setGameState] = useState<GameState>(GameState.Welcome);
-  const [userAnswers, setUserAnswers] = useState<UserAnswer[]>([]);
-  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [startupError, setStartupError] = useState<string | null>(null);
+const App = () => {
+  const [gameState, setGameState] = useState(GameState.Welcome);
+  const [userAnswers, setUserAnswers] = useState([]);
+  const [analysisResult, setAnalysisResult] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [startupError, setStartupError] = useState(null);
   const { errors, actions: errorLogActions } = useErrorLog();
   const { t } = useI18n();
   const { isLoggedIn, hasPassword, actions: authActions } = useAuth();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
-  const [loadingMessage, setLoadingMessage] = useState<string>(t('loading.generatingQuestions'));
-  const [currentQuizQuestions, setCurrentQuizQuestions] = useState<Question[]>([]);
-  const [quizConfig, setQuizConfig] = useState<QuizConfig>({
+  const [loadingMessage, setLoadingMessage] = useState(t('loading.generatingQuestions'));
+  const [currentQuizQuestions, setCurrentQuizQuestions] = useState([]);
+  const [quizConfig, setQuizConfig] = useState({
       numberOfLevels: DEFAULT_NUMBER_OF_LEVELS,
       questionsPerLevel: DEFAULT_QUESTIONS_PER_LEVEL,
   });
 
   const questionBankHook = useQuestionBank();
+  const { questionBank, actions: questionBankActions } = questionBankHook;
+  const { getEnabledQuestionsCount } = questionBankActions;
 
 
   useEffect(() => {
@@ -43,8 +44,8 @@ const App: React.FC = () => {
         let isError = false;
         let errorMessage = '';
         for (let i = 1; i <= quizConfig.numberOfLevels; i++) {
-            const level = i as QuizLevel;
-            const levelCount = questionBankHook.getEnabledQuestionsCount(level);
+            const level = i;
+            const levelCount = getEnabledQuestionsCount(level);
             if (levelCount < quizConfig.questionsPerLevel) {
                 errorMessage = t('errors.notEnoughQuestions', { level, required: quizConfig.questionsPerLevel, available: levelCount });
                 isError = true;
@@ -57,15 +58,15 @@ const App: React.FC = () => {
             setStartupError(null);
         }
     }
-  }, [questionBankHook, gameState, quizConfig, t]);
+  }, [getEnabledQuestionsCount, gameState, quizConfig, t]);
 
 
-  const currentLevel = useMemo((): QuizLevel => {
+  const currentLevel = useMemo(() => {
     if (gameState.startsWith('quiz_')) {
-      return parseInt(gameState.split('_')[1]) as QuizLevel;
+      return parseInt(gameState.split('_')[1]);
     }
     if (gameState.startsWith('results_')) {
-      return parseInt(gameState.split('_')[1]) as QuizLevel;
+      return parseInt(gameState.split('_')[1]);
     }
     return 1;
   }, [gameState]);
@@ -73,32 +74,32 @@ const App: React.FC = () => {
   const handleStartQuiz = useCallback(() => {
     setStartupError(null);
     try {
-        const allQuestionsForLevel1 = questionBankHook.questionBank[1];
+        const allQuestionsForLevel1 = questionBank[1];
         const selectedQuestions = selectRandomQuestions(allQuestionsForLevel1, quizConfig.questionsPerLevel, t);
         setCurrentQuizQuestions(selectedQuestions);
         setGameState(GameState.Quiz_1);
         setUserAnswers([]);
         setAnalysisResult(null);
-    } catch(e: any) {
+    } catch(e) {
         errorLogActions.addError(e.message || t('errors.startQuiz'));
     }
-  }, [questionBankHook.questionBank, quizConfig.questionsPerLevel, errorLogActions, t]);
+  }, [questionBank, quizConfig.questionsPerLevel, errorLogActions, t]);
   
   const handleStartNextLevel = useCallback(() => {
-      const nextLevel = (currentLevel + 1) as QuizLevel;
+      const nextLevel = (currentLevel + 1);
       if(nextLevel <= quizConfig.numberOfLevels) {
           try {
-            const allQuestionsForNextLevel = questionBankHook.questionBank[nextLevel];
+            const allQuestionsForNextLevel = questionBank[nextLevel];
             const selectedQuestions = selectRandomQuestions(allQuestionsForNextLevel, quizConfig.questionsPerLevel, t);
             setCurrentQuizQuestions(selectedQuestions);
-            setGameState(`quiz_${nextLevel}` as GameState);
-          } catch (e: any) {
+            setGameState(`quiz_${nextLevel}`);
+          } catch (e) {
             errorLogActions.addError(e.message || t('errors.startNextLevel', { level: nextLevel }));
           }
       }
-  }, [currentLevel, questionBankHook.questionBank, quizConfig, errorLogActions, t]);
+  }, [currentLevel, questionBank, quizConfig, errorLogActions, t]);
 
-  const handleQuizComplete = useCallback((answers: UserAnswer[], newResult: AnalysisResult) => {
+  const handleQuizComplete = useCallback((answers, newResult) => {
     const allAnswers = [...userAnswers, ...answers];
     setUserAnswers(allAnswers);
 
@@ -106,7 +107,7 @@ const App: React.FC = () => {
         const combinedEconomic = (analysisResult.scores.economic + newResult.scores.economic) / 2;
         const combinedSocial = (analysisResult.scores.social + newResult.scores.social) / 2;
         
-        const combinedResult: AnalysisResult = {
+        const combinedResult = {
             ...newResult,
             scores: { economic: combinedEconomic, social: combinedSocial }
         };
@@ -115,7 +116,7 @@ const App: React.FC = () => {
         setAnalysisResult(newResult);
     }
 
-    setGameState(`results_${currentLevel}` as GameState);
+    setGameState(`results_${currentLevel}`);
     setIsLoading(false);
   }, [userAnswers, analysisResult, currentLevel]);
 
@@ -131,10 +132,10 @@ const App: React.FC = () => {
       logout();
   }, [clearErrors, logout]);
   
-  const handleImport = useCallback((importedState: ImportedState) => {
+  const handleImport = useCallback((importedState) => {
     setUserAnswers(importedState.answers);
     setAnalysisResult(importedState.result);
-    setGameState(`results_${importedState.level}` as GameState);
+    setGameState(`results_${importedState.level}`);
     setStartupError(null);
     setIsLoading(false);
   }, []);
@@ -170,14 +171,14 @@ const App: React.FC = () => {
             throw new Error(t('errors.invalidLinkCode'));
         }
 
-        const importedState: ImportedState = importedWrapper.payload;
+        const importedState = importedWrapper.payload;
         if (importedState.answers && importedState.result && importedState.level) {
           handleImport(importedState);
         } else {
              throw new Error(t('errors.invalidLinkData'));
         }
 
-      } catch (e: any) {
+      } catch (e) {
         console.error("Failed to parse data from URL hash:", e);
         errorLogActions.addError(t('errors.loadSharedResults', { error: e.message }));
       }

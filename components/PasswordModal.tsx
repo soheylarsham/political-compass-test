@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { useI18n } from '../contexts/I18nContext';
+import { useI18n } from '../contexts/I18nContext.tsx';
 
 interface PasswordModalProps {
     hasPassword: boolean;

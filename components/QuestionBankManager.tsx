@@ -1,33 +1,34 @@
-import React, { useState, useRef } from 'react';
-import { type QuizLevel, type Question, MultilingualText, QuestionOption } from '../types';
-import { useQuestionBank } from '../hooks/useQuestionBank';
-import QuestionEditorModal from './QuestionEditorModal';
-import { generateMultipleQuestionsFromAI, validateQuestionsRelevancy } from '../services/geminiService';
-import { generateValidationCode, normalizeText } from '../utils';
-import { useI18n } from '../contexts/I18nContext';
 
+import React, { useState, useRef } from 'react';
+import { useQuestionBank } from '../hooks/useQuestionBank.ts';
+import QuestionEditorModal from './QuestionEditorModal.tsx';
+import { generateMultipleQuestionsFromAI, validateQuestionsRelevancy } from '../services/geminiService.ts';
+import { generateValidationCode, normalizeText } from '../utils.ts';
+import { useI18n } from '../contexts/I18nContext.tsx';
+// FIX: Import the Question type to use in explicit type annotations.
+import type { Question } from '../types.ts';
+
+// FIX: Define prop types for the component to ensure type safety for `questionBankHook`, resolving multiple downstream type errors where question properties were not recognized.
 interface QuestionBankManagerProps {
     questionBankHook: ReturnType<typeof useQuestionBank>;
     onBack: () => void;
     addError: (message: string) => void;
 }
 
-type AIQuestion = { question: string; options: { text: string; economicScore: number; socialScore: number; }[] };
-type AIOption = { text: string; economicScore: number; socialScore: number; };
+const QuestionBankManager = ({ questionBankHook, onBack, addError }: QuestionBankManagerProps) => {
+    const { questionBank, actions } = questionBankHook;
+    const { addQuestion, addMultipleQuestions, updateQuestion, deleteQuestion, deleteMultipleQuestions, toggleQuestionEnabled, importBank, getEnabledQuestionsCount } = actions;
 
-
-const QuestionBankManager: React.FC<QuestionBankManagerProps> = ({ questionBankHook, onBack, addError }) => {
-    const { questionBank, addQuestion, addMultipleQuestions, updateQuestion, deleteQuestion, deleteMultipleQuestions, toggleQuestionEnabled, importBank } = questionBankHook;
-    const [activeLevel, setActiveLevel] = useState<QuizLevel>(1);
+    const [activeLevel, setActiveLevel] = useState(1);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
+    const [editingQuestion, setEditingQuestion] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [loadingMessage, setLoadingMessage] = useState('');
-    const importFileRef = useRef<HTMLInputElement>(null);
+    const importFileRef = useRef(null);
     const { t, language } = useI18n();
-    const currentLang = language as 'fa' | 'en';
+    const currentLang = language;
 
-    const handleEdit = (question: Question) => {
+    const handleEdit = (question) => {
         setEditingQuestion(question);
         setIsModalOpen(true);
     };
@@ -37,7 +38,7 @@ const QuestionBankManager: React.FC<QuestionBankManagerProps> = ({ questionBankH
         setIsModalOpen(true);
     };
 
-    const handleSaveQuestion = (questionData: Omit<Question, 'id' | 'enabled'>) => {
+    const handleSaveQuestion = (questionData) => {
         if (editingQuestion) {
             updateQuestion(activeLevel, {...questionData, id: editingQuestion.id, enabled: editingQuestion.enabled});
         } else {
@@ -47,7 +48,7 @@ const QuestionBankManager: React.FC<QuestionBankManagerProps> = ({ questionBankH
         setEditingQuestion(null);
     };
 
-    const handleDelete = (questionId: string) => {
+    const handleDelete = (questionId) => {
         if (window.confirm(t('questionBank.confirmDelete'))) {
             deleteQuestion(activeLevel, questionId);
         }
@@ -57,26 +58,27 @@ const QuestionBankManager: React.FC<QuestionBankManagerProps> = ({ questionBankH
         setIsLoading(true);
         setLoadingMessage(t('questionBank.loading.generating'));
         try {
+            // FIX: Explicitly type 'q' as 'Question' to resolve type inference issues.
             const allQuestionTexts = Object.values(questionBank).flat().map((q: Question) => q.question[currentLang]);
             const newQuestions = await generateMultipleQuestionsFromAI(10, allQuestionTexts, t, currentLang);
             
             const otherLang = currentLang === 'fa' ? 'en' : 'fa';
-            const transformedQuestions = newQuestions.map((q: AIQuestion) => ({
+            const transformedQuestions = newQuestions.map((q) => ({
                 question: {
                     [currentLang]: q.question,
                     [otherLang]: `[NEEDS TRANSLATION] ${q.question}`
-                } as MultilingualText,
-                options: q.options.map((opt: AIOption) => ({
+                },
+                options: q.options.map((opt) => ({
                     ...opt,
                     text: {
                         [currentLang]: opt.text,
                         [otherLang]: `[NEEDS TRANSLATION] ${opt.text}`
-                    } as MultilingualText
+                    }
                 }))
             }));
 
             addMultipleQuestions(activeLevel, transformedQuestions);
-        } catch(e: any) {
+        } catch(e) {
             addError(e.message || t('errors.aiGeneration'));
         } finally {
             setIsLoading(false);
@@ -87,8 +89,9 @@ const QuestionBankManager: React.FC<QuestionBankManagerProps> = ({ questionBankH
         setIsLoading(true);
         setLoadingMessage(t('questionBank.loading.validating'));
         try {
-            const seenTexts = new Map<string, string>();
-            const duplicateIds = new Set<string>();
+            const seenTexts = new Map();
+            const duplicateIds = new Set();
+            // FIX: Explicitly type 'q' as 'Question' to resolve type inference issues.
             Object.values(questionBank).flat().forEach((q: Question) => {
                  if (!q || !q.question) return;
                 const uniqueKey = `${normalizeText(q.question.fa)}|${normalizeText(q.question.en)}`;
@@ -102,9 +105,10 @@ const QuestionBankManager: React.FC<QuestionBankManagerProps> = ({ questionBankH
             });
 
             setLoadingMessage(t('questionBank.loading.sendingToAI'));
+            // FIX: Use a type guard to correctly type 'q' for the subsequent .map() call.
             const allQuestionsForValidation = Object.values(questionBank).flat()
-                .filter((q: Question | null): q is Question => !!(q && q.id && q.question))
-                .map((q: Question) => ({id: q.id, question: q.question}));
+                .filter((q: any): q is Question => !!(q && q.id && q.question))
+                .map((q) => ({id: q.id, question: q.question}));
             const irrelevantIdsFromAI = await validateQuestionsRelevancy(allQuestionsForValidation, t);
             const irrelevantIds = new Set(irrelevantIdsFromAI);
 
@@ -126,7 +130,7 @@ const QuestionBankManager: React.FC<QuestionBankManagerProps> = ({ questionBankH
                 alert(t('questionBank.alerts.deleteSuccess', { count: idsToDelete.size }));
             }
 
-        } catch (e: any) {
+        } catch (e) {
              addError(e.message || t('errors.validation'));
         } finally {
             setIsLoading(false);
@@ -153,15 +157,18 @@ const QuestionBankManager: React.FC<QuestionBankManagerProps> = ({ questionBankH
         importFileRef.current?.click();
     };
     
-    const handleFileImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileImport = (event) => {
         const file = event.target.files?.[0];
         if (!file) return;
 
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
-                const text = e.target?.result as string;
-                const importedData: { validationCode: string; payload: Record<QuizLevel, Question[]> } = JSON.parse(text);
+                const text = e.target?.result;
+                if (typeof text !== 'string') {
+                    throw new Error('File content could not be read as text.');
+                }
+                const importedData = JSON.parse(text);
 
                 if (!importedData.validationCode || !/^PC-QB-\d{8}-\d{6}$/.test(importedData.validationCode)) {
                     throw new Error(t('errors.invalidFileCode'));
@@ -172,7 +179,7 @@ const QuestionBankManager: React.FC<QuestionBankManagerProps> = ({ questionBankH
                 } else {
                      throw new Error(t('errors.invalidFileData'));
                 }
-            } catch (err: any) {
+            } catch (err) {
                 addError(t('errors.importFile', { error: err.message }));
                 console.error(err);
             }
@@ -186,9 +193,9 @@ const QuestionBankManager: React.FC<QuestionBankManagerProps> = ({ questionBankH
     const level3Count = questionBank[3]?.length || 0;
     const totalCount = level1Count + level2Count + level3Count;
     
-    const enabled1Count = questionBankHook.getEnabledQuestionsCount(1);
-    const enabled2Count = questionBankHook.getEnabledQuestionsCount(2);
-    const enabled3Count = questionBankHook.getEnabledQuestionsCount(3);
+    const enabled1Count = getEnabledQuestionsCount(1);
+    const enabled2Count = getEnabledQuestionsCount(2);
+    const enabled3Count = getEnabledQuestionsCount(3);
     const totalEnabledCount = enabled1Count + enabled2Count + enabled3Count;
 
 
@@ -216,7 +223,7 @@ const QuestionBankManager: React.FC<QuestionBankManagerProps> = ({ questionBankH
 
             <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
                 <div className="flex gap-2 p-1 bg-gray-900/50 rounded-lg">
-                    {([1, 2, 3] as QuizLevel[]).map(level => (
+                    {([1, 2, 3]).map(level => (
                         <button key={level} onClick={() => setActiveLevel(level)} className={`px-4 py-2 rounded-md transition-colors ${activeLevel === level ? 'bg-cyan-600 text-white' : 'text-gray-300 hover:bg-gray-700'}`}>
                             {t('questionBank.level', { level })} ({questionBank[level]?.length || 0})
                         </button>
@@ -230,7 +237,7 @@ const QuestionBankManager: React.FC<QuestionBankManagerProps> = ({ questionBankH
             </div>
 
             <div className="space-y-3 max-h-[35vh] overflow-y-auto pr-2">
-                {questionBank[activeLevel]?.map((q: Question) => (
+                {questionBank[activeLevel]?.map((q) => (
                     <div key={q.id} className="bg-gray-700/50 p-4 rounded-lg flex items-start justify-between gap-4">
                         <div className="flex-grow">
                             <label className="flex items-center cursor-pointer">

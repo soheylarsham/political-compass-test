@@ -1,5 +1,6 @@
+
 import { useState, useMemo, useCallback } from 'react';
-import { simpleHash } from '../utils';
+import { simpleHash } from '../utils.ts';
 
 const AUTH_STORAGE_KEY = 'politicalCompassAuth';
 // This salt is hardcoded in the client. It's for obfuscation, not true security.

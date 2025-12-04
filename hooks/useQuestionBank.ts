@@ -1,19 +1,24 @@
-import { useState, useEffect, useCallback } from 'react';
-import { type Question, type QuizLevel, MultilingualText } from '../types';
-import { questionBank as defaultQuestionBank } from '../data/questionBank';
-import { normalizeText } from '../utils';
-import { useI18n } from '../contexts/I18nContext';
+
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { questionBank as defaultQuestionBank } from '../data/questionBank.ts';
+import { normalizeText } from '../utils.ts';
+import { useI18n } from '../contexts/I18nContext.tsx';
+// FIX: Import question-related types for strong typing.
+import type { Question, QuestionBankType, RawQuestion } from '../types.ts';
 
 const LOCAL_STORAGE_KEY = 'politicalCompassQuestionBank';
 
 // Function to add unique IDs and default enabled status to seed data
-const initializeQuestions = (): Record<QuizLevel, Question[]> => {
-    const initializedBank: Record<string, Question[]> = {};
+// FIX: Strongly type the function and its return value.
+const initializeQuestions = (): QuestionBankType => {
+    // FIX: Strongly type the initializedBank object.
+    const initializedBank: QuestionBankType = {};
     const seenTexts = new Set<string>();
 
     for (const levelStr in defaultQuestionBank) {
-        const level = parseInt(levelStr) as QuizLevel;
-        initializedBank[level] = defaultQuestionBank[level]
+        const level = parseInt(levelStr);
+        // FIX: Assert the type of the raw question data to prevent 'unknown' type errors.
+        initializedBank[level] = (defaultQuestionBank[level] as RawQuestion[])
             .map((q, index) => {
                 const uniqueKey = `${normalizeText(q.question.fa)}|${normalizeText(q.question.en)}`;
                 if (seenTexts.has(uniqueKey)) {
@@ -26,19 +31,22 @@ const initializeQuestions = (): Record<QuizLevel, Question[]> => {
                     enabled: true,
                 };
             })
+            // FIX: Use a type guard to filter out nulls and correctly type the resulting array.
             .filter((q): q is Question => q !== null); // Filter out nulls
     }
-    return initializedBank as Record<QuizLevel, Question[]>;
+    return initializedBank;
 };
 
 
 export const useQuestionBank = () => {
     const { t } = useI18n();
-    const [questionBank, setQuestionBank] = useState<Record<QuizLevel, Question[]>>(() => {
+    // FIX: Provide the QuestionBankType generic to useState for strong typing.
+    const [questionBank, setQuestionBank] = useState<QuestionBankType>(() => {
         try {
             const storedBank = window.localStorage.getItem(LOCAL_STORAGE_KEY);
             if (storedBank) {
-                return JSON.parse(storedBank) as Record<QuizLevel, Question[]>;
+                // FIX: Cast the parsed JSON to the correct type.
+                return JSON.parse(storedBank) as QuestionBankType;
             }
         } catch (error) {
             console.error("Error reading from localStorage", error);
@@ -54,12 +62,14 @@ export const useQuestionBank = () => {
         }
     }, [questionBank]);
 
-    const addQuestion = useCallback((level: QuizLevel, newQuestion: Omit<Question, 'id' | 'enabled'>): boolean => {
+    // FIX: Add types for function parameters to ensure type safety.
+    const addQuestion = useCallback((level: number, newQuestion: RawQuestion) => {
         const normalizedFa = normalizeText(newQuestion.question.fa);
         const normalizedEn = normalizeText(newQuestion.question.en);
         
         for (const lvl in questionBank) {
-            if (questionBank[parseInt(lvl, 10) as QuizLevel].some((q: Question) => 
+            // FIX: Explicitly type 'q' as 'Question' to resolve type inference issues.
+            if (questionBank[parseInt(lvl, 10)].some((q: Question) => 
                 q && q.question && (
                     normalizeText(q.question.fa) === normalizedFa || 
                     normalizeText(q.question.en) === normalizedEn
@@ -72,22 +82,26 @@ export const useQuestionBank = () => {
 
         setQuestionBank(prevBank => {
             const newBank = { ...prevBank };
+            // FIX: Ensure the new question conforms to the Question interface.
             const questionWithId: Question = {
                 ...newQuestion,
                 id: `${level}-${Date.now()}`,
                 enabled: true,
             };
+            if (!newBank[level]) newBank[level] = [];
             newBank[level] = [...newBank[level], questionWithId];
             return newBank;
         });
         return true;
     }, [questionBank, t]);
     
-    const addMultipleQuestions = useCallback((level: QuizLevel, newQuestions: Omit<Question, 'id' | 'enabled'>[]): number => {
+    // FIX: Add types for function parameters to ensure type safety.
+    const addMultipleQuestions = useCallback((level: number, newQuestions: RawQuestion[]) => {
         let addedCount = 0;
         setQuestionBank(prevBank => {
             const existingTexts = new Set<string>();
-            Object.values(prevBank).flat().forEach((q: Question) => {
+            // Explicitly cast to Question[] to avoid 'unknown' type error
+            (Object.values(prevBank).flat() as Question[]).forEach((q) => {
                 if (q && q.question) {
                     existingTexts.add(normalizeText(q.question.fa));
                     existingTexts.add(normalizeText(q.question.en));
@@ -95,7 +109,7 @@ export const useQuestionBank = () => {
             });
 
             const uniqueNewQuestions = newQuestions
-                .filter((q: Omit<Question, 'id' | 'enabled'>) => {
+                .filter((q) => {
                     const normFa = normalizeText(q.question.fa);
                     const normEn = normalizeText(q.question.en);
                     if (existingTexts.has(normFa) || existingTexts.has(normEn)) {
@@ -112,13 +126,14 @@ export const useQuestionBank = () => {
             }
 
             if (addedCount > 0) {
-                const questionsWithIds: Question[] = uniqueNewQuestions.map((q: Omit<Question, 'id' | 'enabled'>) => ({
+                const questionsWithIds = uniqueNewQuestions.map((q): Question => ({
                     ...q,
                     id: `${level}-${Date.now()}-${Math.random()}`,
                     enabled: true,
                 }));
 
                 const newBank = { ...prevBank };
+                if (!newBank[level]) newBank[level] = [];
                 newBank[level] = [...newBank[level], ...questionsWithIds];
                 return newBank;
             }
@@ -128,56 +143,61 @@ export const useQuestionBank = () => {
         return addedCount;
     }, [t]);
 
-    const updateQuestion = useCallback((level: QuizLevel, updatedQuestion: Question) => {
+    // FIX: Add types for function parameters to ensure type safety.
+    const updateQuestion = useCallback((level: number, updatedQuestion: Question) => {
         setQuestionBank(prevBank => {
             const newBank = { ...prevBank };
-            newBank[level] = newBank[level].map((q: Question) => q.id === updatedQuestion.id ? updatedQuestion : q);
+            newBank[level] = newBank[level].map((q) => q.id === updatedQuestion.id ? updatedQuestion : q);
             return newBank;
         });
     }, []);
 
-    const deleteQuestion = useCallback((level: QuizLevel, questionId: string) => {
+    // FIX: Add types for function parameters to ensure type safety.
+    const deleteQuestion = useCallback((level: number, questionId: string) => {
         setQuestionBank(prevBank => {
             const newBank = { ...prevBank };
-            newBank[level] = newBank[level].filter((q: Question) => q.id !== questionId);
+            newBank[level] = newBank[level].filter((q) => q.id !== questionId);
             return newBank;
         });
     }, []);
     
+    // FIX: Add types for function parameters to ensure type safety.
     const deleteMultipleQuestions = useCallback((questionIdsToDelete: Set<string>) => {
         if (questionIdsToDelete.size === 0) return;
         setQuestionBank(prevBank => {
             const newBank = { ...prevBank };
             for (const levelStr in newBank) {
-                const level = parseInt(levelStr) as QuizLevel;
-                newBank[level] = newBank[level].filter((q: Question) => !questionIdsToDelete.has(q.id));
+                const level = parseInt(levelStr);
+                newBank[level] = newBank[level].filter((q) => !questionIdsToDelete.has(q.id));
             }
             return newBank;
         });
     }, []);
 
-    const toggleQuestionEnabled = useCallback((level: QuizLevel, questionId: string) => {
+    // FIX: Add types for function parameters to ensure type safety.
+    const toggleQuestionEnabled = useCallback((level: number, questionId: string) => {
         setQuestionBank(prevBank => {
             const newBank = { ...prevBank };
-            newBank[level] = newBank[level].map((q: Question) =>
+            newBank[level] = newBank[level].map((q) =>
                 q.id === questionId ? { ...q, enabled: !q.enabled } : q
             );
             return newBank;
         });
     }, []);
     
-    const importBank = useCallback((importedBank: Record<QuizLevel, Question[]>) => {
+    // FIX: Add types for function parameters to ensure type safety.
+    const importBank = useCallback((importedBank: QuestionBankType) => {
         if (!importedBank[1] || !importedBank[2] || !importedBank[3]) {
             return false;
         }
 
-        const uniqueQuestions: Record<QuizLevel, Question[]> = { 1: [], 2: [], 3: [] };
+        const uniqueQuestions: QuestionBankType = { 1: [], 2: [], 3: [] };
         const seenTexts = new Set<string>();
         let duplicatesFound = 0;
 
-        ([1, 2, 3] as QuizLevel[]).forEach(level => {
+        ([1, 2, 3]).forEach(level => {
             if (Array.isArray(importedBank[level])) {
-                importedBank[level].forEach((q: Question) => {
+                importedBank[level].forEach((q) => {
                     if (q && q.question && typeof q.question.fa === 'string' && typeof q.question.en === 'string') {
                         const uniqueKey = `${normalizeText(q.question.fa)}|${normalizeText(q.question.en)}`;
                         if (!seenTexts.has(uniqueKey)) {
@@ -198,13 +218,13 @@ export const useQuestionBank = () => {
         return true;
     }, [t]);
 
-    const getEnabledQuestionsCount = useCallback((level: QuizLevel): number => {
-        return questionBank[level]?.filter((q: Question) => q.enabled).length || 0;
+    // FIX: Add types for function parameters to ensure type safety.
+    const getEnabledQuestionsCount = useCallback((level: number) => {
+        if (!questionBank[level]) return 0;
+        return questionBank[level].filter((q) => q.enabled).length;
     }, [questionBank]);
 
-
-    return {
-        questionBank,
+    const actions = useMemo(() => ({
         addQuestion,
         addMultipleQuestions,
         updateQuestion,
@@ -213,5 +233,19 @@ export const useQuestionBank = () => {
         toggleQuestionEnabled,
         importBank,
         getEnabledQuestionsCount,
+    }), [
+        addQuestion, 
+        addMultipleQuestions, 
+        updateQuestion, 
+        deleteQuestion, 
+        deleteMultipleQuestions, 
+        toggleQuestionEnabled, 
+        importBank, 
+        getEnabledQuestionsCount
+    ]);
+
+    return {
+        questionBank,
+        actions,
     };
 };

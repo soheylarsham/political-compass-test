@@ -1,15 +1,8 @@
 
 import React from 'react';
-import { type AppError } from '../types';
-import { useI18n } from '../contexts/I18nContext';
+import { useI18n } from '../contexts/I18nContext.tsx';
 
-interface ErrorLogProps {
-    errors: AppError[];
-    removeError: (id: number) => void;
-    clearErrors: () => void;
-}
-
-const ErrorLog: React.FC<ErrorLogProps> = ({ errors, removeError, clearErrors }) => {
+const ErrorLog = ({ errors, removeError, clearErrors }) => {
     const { t } = useI18n();
 
     if (errors.length === 0) {

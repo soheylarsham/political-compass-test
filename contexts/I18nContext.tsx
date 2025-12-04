@@ -1,8 +1,8 @@
 
-import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
-import { fa } from '../languages/fa';
-import { en } from '../languages/en';
-import { type Language, type Translations } from '../types';
+import React, { createContext, useState, useContext, useEffect, useCallback, useMemo } from 'react';
+import { fa } from '../languages/fa.ts';
+import { en } from '../languages/en.ts';
+import { type Language, type Translations } from '../types.ts';
 
 const LANG_STORAGE_KEY = 'politicalCompassLang';
 const CUSTOM_LANG_STORAGE_KEY = 'politicalCompassCustomLangs';
@@ -58,10 +58,10 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
         document.documentElement.dir = currentLangData.dir;
     }, [currentLangData]);
     
-    const setLanguage = (langCode: string) => {
+    const setLanguage = useCallback((langCode: string) => {
         localStorage.setItem(LANG_STORAGE_KEY, langCode);
         _setLanguage(langCode);
-    };
+    }, []);
 
     const t = useCallback((key: string, params?: Record<string, string | number>): string => {
         // Allow fetching general keys like 'dir' or 'langCode'
@@ -72,7 +72,7 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, [currentLangData]);
 
 
-    const addLanguage = (newLang: Language): boolean => {
+    const addLanguage = useCallback((newLang: Language): boolean => {
         const langExists = availableLanguages.some(l => l.langCode === newLang.langCode);
         if (langExists) {
             return false;
@@ -85,10 +85,16 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setAvailableLanguages(Object.values({ ...defaultLanguages, ...customLangs }));
         setLanguage(newLang.langCode); // Switch to the new language
         return true;
-    };
+    }, [availableLanguages, setLanguage]);
 
 
-    const value = { language, setLanguage, t, availableLanguages, addLanguage };
+    const value = useMemo(() => ({ 
+        language, 
+        setLanguage, 
+        t, 
+        availableLanguages, 
+        addLanguage 
+    }), [language, setLanguage, t, availableLanguages, addLanguage]);
 
     return (
         <I18nContext.Provider value={value}>

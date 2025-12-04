@@ -1,6 +1,6 @@
 # Your Political Compass
 
-[English Version](#english-version) | [نسخه فارسی](#نسخه-فارسی)
+[English Version](#english-version) | [نسخه فارسی](#-نسخه-فارسی)
 
 ---
 
@@ -10,7 +10,10 @@ An interactive web application that determines a user's political orientation th
 
 ### Screenshots
 
-![Application Screenshot](images/quiz-screen.png)
+| Welcome Screen | Test Settings | Question Management |
+| :---: | :---: | :---: |
+| ![Welcome Screen](images/en/welcome-en.png) | ![Test Settings](images/en/settings-en.png) | ![Question Bank Management](images/en/manage-en.png) |
+
 
 ### Features
 
@@ -30,44 +33,65 @@ An interactive web application that determines a user's political orientation th
 
 ### Local Installation & Setup
 
-This is a static web application with no server-side build step. You can run it by opening the `index.html` file directly in a browser or using a simple local server.
+This is a static web application with no server-side build step. While you can open `index.html` directly in a browser, using a simple local server is recommended for the best experience.
 
-1.  **Clone the Repository:**
+#### Step 1: Prerequisites
+
+*   **Node.js**: You need Node.js to use `npm` (Node Package Manager), which helps in installing the local server.
+    *   ➡️ [**Download and install Node.js here**](https://nodejs.org/en/download/).
+
+#### Step 2: Clone the Repository
+Open your terminal or command prompt and run:
+```bash
+git clone https://github.com/your-username/your-repo-name.git
+cd your-repo-name
+```
+(Replace the URL with your repository's URL).
+
+#### Step 3: Install & Run a Local Server
+We recommend `http-server` for its simplicity.
+
+1.  In your terminal, install `http-server` globally using npm:
     ```bash
-    git clone <repository-url>
-    cd <repository-folder>
+   npm run build
     ```
-
-2.  **Run with a Local Server (Recommended):**
-    For the best experience, use a simple HTTP server. If you have Node.js installed, you can use `http-server`:
+2.  From the project's root directory, run the server:
     ```bash
-    # Install http-server globally
-    npm install -g http-server
-
-    # Run the server in the project directory
-    http-server
+    http-server dist
     ```
-    Then, open your browser to `http://localhost:8080`.
+3.  Open your browser and navigate to the address shown in the terminal (usually ` http://172.27.96.1:8080`).
 
-#### API Key Configuration
+### API Key Configuration
 
 The application requires a Google Gemini API key to function.
 
-*   **Constraint**: The code is designed to exclusively read the API key from `process.env.API_KEY`, assuming it is injected by the hosting environment.
+> ⚠️ **Important Constraint**: The code is designed to exclusively read the API key from `process.env.API_KEY`, assuming it is injected by the hosting environment. For local development, you must use the following workaround.
 
-*   **Local Development Workaround**: Since a browser cannot directly read `process.env`, you must temporarily modify the code for local testing.
-    1.  Open the file `services/geminiService.ts`.
-    2.  Find the line `const API_KEY = process.env.API_KEY;`.
-    3.  Replace it with your actual key: `const API_KEY = 'YOUR_GEMINI_API_KEY_HERE';`.
-    4.  **IMPORTANT**: Do **NOT** commit this change to your repository. Exposing your API key publicly is a major security risk. Revert this change before committing your code.
+#### Step-by-Step Guide for Local Use:
+
+1.  **Get a Gemini API Key**:
+    *   ➡️ Visit [**Google AI Studio**](https://aistudio.google.com/app/apikey) to create and obtain your API key.
+
+2.  **Temporarily Modify the Code**:
+    *   Open the file `services/geminiService.ts`.
+    *   Find this line:
+        ```javascript
+        const API_KEY = process.env.API_KEY;
+        ```
+    *   Replace it with your actual key:
+        ```javascript
+        const API_KEY = 'YOUR_GEMINI_API_KEY_HERE';
+        ```
+
+3.  **Security Warning**:
+    *   **NEVER commit this change to your repository.** Exposing your API key publicly is a major security risk that can lead to unauthorized use and financial costs. **Revert this change before you commit your code.**
 
 ### Deployment
 
-You can deploy this static application to various hosting providers. Here are guides for Cloudflare Pages and GitHub Pages.
+You can deploy this static application to various hosting providers.
 
 #### Cloudflare Pages (Recommended)
-
-Cloudflare Pages is recommended as it allows you to securely store your API key as an environment variable, which is required for the application to work without code modification.
+Cloudflare Pages is recommended as it allows you to securely store your API key as an environment variable, which is the intended way for the application to work.
 
 1.  **Push to GitHub**: Make sure your project is on a GitHub repository.
 2.  **Create a Cloudflare Pages Project**:
@@ -76,7 +100,7 @@ Cloudflare Pages is recommended as it allows you to securely store your API key 
     *   Select your project repository.
 3.  **Configure Build Settings**:
     *   Since this is a static project, you don't need a build command.
-    *   **Framework preset**: None
+    *   **Framework preset**: `None`
     *   **Build command**: Leave empty.
     *   **Build output directory**: Leave empty (or set to `/`).
 4.  **Set Environment Variable**:
@@ -85,21 +109,19 @@ Cloudflare Pages is recommended as it allows you to securely store your API key 
         *   **Variable name**: `API_KEY`
         *   **Value**: Enter your Google Gemini API key.
     *   Click **Save**.
-5.  **Deploy**: Re-deploy your project for the environment variable to take effect. Cloudflare will securely make this variable available to the application at runtime.
+5.  **Deploy**: Re-deploy your project for the environment variable to take effect.
 
 #### GitHub Pages
-
 Deploying on GitHub Pages is simple, but it has a major limitation: it does not support environment variables for client-side code.
 
-1.  **Push to GitHub**: Ensure your code is in a GitHub repository.
+> 🚨 **Security Risk**: To make the app work on GitHub Pages, you would have to hardcode your API key in the `services/geminiService.ts` file. **This is NOT recommended.** It will expose your key to anyone who inspects your site's code. If you choose this path, use a key with strict usage limits and monitor it closely.
+
+1.  **Push to GitHub**: Ensure your code is in a GitHub repository (with the hardcoded key, if you accept the risk).
 2.  **Enable GitHub Pages**:
     *   Go to your repository's **Settings** tab.
     *   Click on **Pages** in the left sidebar.
     *   Under **Build and deployment**, select a **Source** (e.g., `Deploy from a branch`) and choose your main branch.
     *   Save the changes. Your site will be deployed to `https://<your-username>.github.io/<repository-name>/`.
-3.  **API Key Warning**:
-    *   To make the app work on GitHub Pages, you would have to hardcode your API key in the `services/geminiService.ts` file.
-    *   **This is NOT recommended.** It will expose your key to anyone who inspects your site's code, which can lead to abuse and financial costs. If you choose to do this, use a key with strict usage limits and monitor it closely.
 
 ---
 
@@ -109,7 +131,9 @@ Deploying on GitHub Pages is simple, but it has a major limitation: it does not 
 
 ### تصاویر پیش‌نمایش
 
-![تصویر برنامه](images/quiz-screen.png)
+| صفحه خوش‌آمدگویی | تنظیم رمز عبور | مدیریت سوالات |
+| :---: | :---: | :---: |
+| ![صفحه خوش‌آمدگویی](images/fa/welcome-fa.png) | ![تنظیم رمز عبور](images/fa/password-fa.png) | ![مدیریت بانک سوالات](images/fa/manage-fa.png) |
 
 ### امکانات
 
@@ -129,44 +153,65 @@ Deploying on GitHub Pages is simple, but it has a major limitation: it does not 
 
 ### نصب و راه‌اندازی محلی
 
-این یک اپلیکیشن وب استاتیک بدون نیاز به مرحله بیلد سمت سرور است. می‌توانید آن را با باز کردن مستقیم فایل `index.html` در مرورگر یا با استفاده از یک سرور محلی ساده اجرا کنید.
+این یک اپلیکیشن وب استاتیک بدون نیاز به مرحله بیلد سمت سرور است. با اینکه می‌توانید فایل `index.html` را مستقیماً در مرورگر باز کنید، اما برای بهترین تجربه استفاده از یک سرور محلی ساده توصیه می‌شود.
 
-۱. **کلون کردن ریپازیتوری:**
+#### مرحله ۱: پیش‌نیازها
+
+*   **Node.js**: شما برای استفاده از `npm` (مدیر بسته نود) جهت نصب سرور محلی، به Node.js نیاز دارید.
+    *   ⬅️ [**برای دانلود و نصب Node.js اینجا کلیک کنید**](https://nodejs.org/en/download/).
+
+#### مرحله ۲: کلون کردن ریپازیتوری
+ترمینال یا خط فرمان خود را باز کرده و دستور زیر را اجرا کنید:
+```bash
+git clone https://github.com/your-username/your-repo-name.git
+cd your-repo-name
+```
+(آدرس URL را با آدرس ریپازیتوری خود جایگزین کنید).
+
+#### مرحله ۳: نصب و اجرای سرور محلی
+ما `http-server` را به دلیل سادگی آن پیشنهاد می‌کنیم.
+
+1.  در ترمینال خود، `http-server` را به صورت سراسری با استفاده از npm نصب کنید:
     ```bash
-    git clone <repository-url>
-    cd <repository-folder>
+     npm run build
     ```
-
-۲. **اجرا با سرور محلی (توصیه می‌شود):**
-   برای بهترین تجربه، از یک سرور HTTP ساده استفاده کنید. اگر Node.js را نصب کرده‌اید، می‌توانید از `http-server` استفاده کنید:
+2.  از پوشه اصلی پروژه، سرور را اجرا کنید:
     ```bash
-    # نصب http-server به صورت سراسری
-    npm install -g http-server
-
-    # اجرای سرور در پوشه پروژه
-    http-server
+    http-server dist
     ```
-   سپس، مرورگر خود را به آدرس `http://localhost:8080` باز کنید.
+3.  مرورگر خود را باز کرده و به آدرسی که در ترمینال نمایش داده شده بروید (معمولاً ` http://172.27.96.1:8080`).
 
-#### تنظیم کلید API
+### تنظیم کلید API
 
 این برنامه برای عملکرد صحیح به یک کلید API گوگل Gemini نیاز دارد.
 
-*   **محدودیت**: کد به گونه‌ای طراحی شده که کلید API را منحصراً از `process.env.API_KEY` می‌خواند، با این فرض که این متغیر توسط محیط میزبانی تزریق می‌شود.
+> ⚠️ **محدودیت مهم**: کد به گونه‌ای طراحی شده که کلید API را منحصراً از `process.env.API_KEY` می‌خواند، با این فرض که این متغیر توسط محیط میزبانی تزریق می‌شود. برای توسعه محلی، باید از راه‌حل زیر استفاده کنید.
 
-*   **راه‌حل برای توسعه محلی**: از آنجایی که مرورگر نمی‌تواند مستقیماً `process.env` را بخواند، باید برای تست محلی کد را به طور موقت تغییر دهید.
-    ۱. فایل `services/geminiService.ts` را باز کنید.
-    ۲. خط `const API_KEY = process.env.API_KEY;` را پیدا کنید.
-    ۳. آن را با کلید واقعی خود جایگزین کنید: `const API_KEY = 'YOUR_GEMINI_API_KEY_HERE';`.
-    ۴. **مهم**: این تغییر را در ریپازیتوری خود کامیت **نکنید**. افشای عمومی کلید API یک خطر امنیتی بزرگ است. قبل از کامیت کردن کد، این تغییر را به حالت اول بازگردانید.
+#### راهنمای گام‌به‌گام برای استفاده محلی:
+
+۱. **دریافت کلید API Gemini**:
+    *   ⬅️ برای ساخت و دریافت کلید API خود به [**Google AI Studio**](https://aistudio.google.com/app/apikey) مراجعه کنید.
+
+۲. **تغییر موقت کد**:
+    *   فایل `services/geminiService.ts` را باز کنید.
+    *   این خط را پیدا کنید:
+        ```javascript
+        const API_KEY = process.env.API_KEY;
+        ```
+    *   آن را با کلید واقعی خود جایگزین کنید:
+        ```javascript
+        const API_KEY = 'AIzaSyAA2v7cLqblWolFfKUz0ZKQKdGRoiOAt8w';
+        ```
+
+۳. **هشدار امنیتی**:
+    *   **هرگز این تغییر را در ریپازیتوری خود کامیت نکنید.** افشای عمومی کلید API یک خطر امنیتی بزرگ است و می‌تواند منجر به استفاده غیرمجاز و هزینه‌های مالی برای شما شود. **قبل از کامیت کردن کد، این تغییر را به حالت اول بازگردانید.**
 
 ### استقرار (Deployment)
 
-می‌توانید این اپلیکیشن استاتیک را روی سرویس‌های میزبانی مختلف مستقر کنید. در ادامه راهنمای استقرار روی Cloudflare Pages و GitHub Pages آمده است.
+می‌توانید این اپلیکیشن استاتیک را روی سرویس‌های میزبانی مختلف مستقر کنید.
 
 #### Cloudflare Pages (توصیه می‌شود)
-
-Cloudflare Pages توصیه می‌شود زیرا به شما امکان می‌دهد کلید API خود را به صورت امن به عنوان یک متغیر محیطی ذخیره کنید، که برای کارکرد برنامه بدون تغییر کد ضروری است.
+Cloudflare Pages توصیه می‌شود زیرا به شما امکان می‌دهد کلید API خود را به صورت امن به عنوان یک متغیر محیطی ذخیره کنید، که روش صحیح برای کارکرد برنامه است.
 
 ۱. **ارسال به گیت‌هاب**: مطمئن شوید پروژه شما روی یک ریپازیتوری گیت‌هاب قرار دارد.
 ۲. **ایجاد پروژه در Cloudflare Pages**:
@@ -175,7 +220,7 @@ Cloudflare Pages توصیه می‌شود زیرا به شما امکان می�
     *   ریپازیتوری پروژه خود را انتخاب کنید.
 ۳. **تنظیمات بیلد**:
     *   از آنجایی که این یک پروژه استاتیک است، به دستور بیلد نیازی ندارید.
-    *   **Framework preset**: None
+    *   **Framework preset**: `None`
     *   **Build command**: خالی بگذارید.
     *   **Build output directory**: خالی بگذارید (یا `/` را تنظیم کنید).
 ۴. **تنظیم متغیر محیطی**:
@@ -184,18 +229,16 @@ Cloudflare Pages توصیه می‌شود زیرا به شما امکان می�
         *   **Variable name**: `API_KEY`
         *   **Value**: کلید API گوگل Gemini خود را وارد کنید.
     *   روی **Save** کلیک کنید.
-۵. **استقرار**: پروژه خود را مجدداً مستقر کنید تا متغیر محیطی اعمال شود. کلودفلر این متغیر را به صورت امن در زمان اجرا در اختیار برنامه قرار می‌دهد.
+۵. **استقرار**: پروژه خود را مجدداً مستقر کنید تا متغیر محیطی اعمال شود.
 
 #### GitHub Pages
-
 استقرار روی GitHub Pages ساده است، اما یک محدودیت بزرگ دارد: از متغیرهای محیطی برای کد سمت کلاینت پشتیبانی نمی‌کند.
 
-۱. **ارسال به گیت‌هاب**: اطمینان حاصل کنید که کد شما در یک ریپازیتوری گیت‌هاب است.
+> 🚨 **خطر امنیتی**: برای اینکه برنامه روی GitHub Pages کار کند، باید کلید API خود را مستقیماً در فایل `services/geminiService.ts` وارد کنید (Hardcode کنید). **این کار توصیه نمی‌شود.** این کار کلید شما را در معرض دید هر کسی که کد سایت شما را بررسی کند قرار می‌دهد. اگر این مسیر را انتخاب کردید، از کلیدی با محدودیت‌های استفاده شدید استفاده کرده و آن را به دقت زیر نظر داشته باشید.
+
+۱. **ارسال به گیت‌هاب**: اطمینان حاصل کنید که کد شما در یک ریپازیتوری گیت‌هاب است (با کلید هاردکد شده، اگر ریسک آن را می‌پذیرید).
 ۲. **فعال‌سازی GitHub Pages**:
     *   به تب **Settings** ریپازیتوری خود بروید.
     *   در نوار کناری سمت چپ روی **Pages** کلیک کنید.
     *   در بخش **Build and deployment**، یک **Source** (مثلاً `Deploy from a branch`) انتخاب کرده و شاخه اصلی خود را برگزینید.
     *   تغییرات را ذخیره کنید. سایت شما روی آدرس `https://<your-username>.github.io/<repository-name>/` مستقر خواهد شد.
-۳. **هشدار کلید API**:
-    *   برای اینکه برنامه روی GitHub Pages کار کند، باید کلید API خود را مستقیماً در فایل `services/geminiService.ts` وارد کنید (Hardcode کنید).
-    *   **این کار توصیه نمی‌شود.** این کار کلید شما را در معرض دید هر کسی که کد سایت شما را بررسی کند قرار می‌دهد، که می‌تواند منجر به سوءاستفاده و هزینه‌های مالی شود. اگر این کار را انتخاب کردید، از کلیدی با محدودیت‌های استفاده شدید استفاده کرده و آن را به دقت زیر نظر داشته باشید.

@@ -1,29 +1,23 @@
 
 import React, { useRef } from 'react';
-import { type UserAnswer, type AnalysisResult, type QuizLevel, Language, Translations } from '../types';
-import { useI18n } from '../contexts/I18nContext';
+import { useI18n } from '../contexts/I18nContext.tsx';
 
-interface WelcomeScreenProps {
-  onStart: () => void;
-  onImport: (state: { answers: UserAnswer[], result: AnalysisResult, level: QuizLevel }) => void;
-  onManageQuestions: () => void;
-  onShowSettings: () => void;
-  disabled: boolean;
-  addError: (message: string) => void;
-}
-
-const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStart, onImport, onManageQuestions, onShowSettings, disabled, addError }) => {
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const langFileInputRef = useRef<HTMLInputElement>(null);
+const WelcomeScreen = ({ onStart, onImport, onManageQuestions, onShowSettings, disabled, addError }) => {
+    const fileInputRef = useRef(null);
+    const langFileInputRef = useRef(null);
     const { t, addLanguage } = useI18n();
 
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = (event) => {
         const file = event.target.files?.[0];
         if (file) {
             const reader = new FileReader();
             reader.onload = (e) => {
                 try {
-                    const text = e.target?.result as string;
+                    const text = e.target?.result;
+                    // FIX: Ensure 'text' is a string before parsing.
+                    if (typeof text !== 'string') {
+                        throw new Error('File content could not be read as text.');
+                    }
                     const importedWrapper = JSON.parse(text);
 
                     if (!importedWrapper.validationCode || !/^PC-R-\d{8}-\d{6}$/.test(importedWrapper.validationCode)) {
@@ -37,7 +31,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStart, onImport, onMana
                     } else {
                         throw new Error(t('errors.invalidFileData'));
                     }
-                } catch (error: any) {
+                } catch (error) {
                     const message = t('errors.importFile', { error: error.message });
                     console.error("Failed to import file:", error);
                     addError(message);
@@ -51,13 +45,17 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStart, onImport, onMana
         }
     };
 
-    const handleLanguageFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleLanguageFileChange = (event) => {
         const file = event.target.files?.[0];
         if (file) {
             const reader = new FileReader();
             reader.onload = (e) => {
                 try {
-                    const text = e.target?.result as string;
+                    const text = e.target?.result;
+                    // FIX: Ensure 'text' is a string before parsing.
+                    if (typeof text !== 'string') {
+                        throw new Error('File content could not be read as text.');
+                    }
                     const importedLang = JSON.parse(text);
 
                     if (
@@ -69,11 +67,11 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStart, onImport, onMana
                          throw new Error(t('errors.invalidLangFileFormat'));
                     }
                     
-                    const newLang: Language = {
+                    const newLang = {
                         langCode: importedLang.langCode,
                         langName: importedLang.langName,
                         dir: importedLang.dir,
-                        translations: importedLang.translations as Translations
+                        translations: importedLang.translations
                     };
 
                     if (addLanguage(newLang)) {
@@ -82,7 +80,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStart, onImport, onMana
                          alert(t('welcomeScreen.langImportExists', { langCode: newLang.langCode }));
                     }
 
-                } catch (error: any) {
+                } catch (error) {
                      addError(t('errors.importLangFile', { error: error.message }));
                 } finally {
                     if (event.target) {

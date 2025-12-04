@@ -1,4 +1,5 @@
-import { type Language } from "../types";
+
+import { type Language } from '../types.ts';
 
 export const fa: Language = {
   langCode: 'fa',
@@ -10,6 +11,7 @@ export const fa: Language = {
     header: {
       title: 'قطب‌نمای سیاسی شما',
       resetButton: 'شروع مجدد',
+      homeButton: 'صفحه اصلی',
     },
     welcomeScreen: {
       title: 'به آزمون قطب‌نمای سیاسی خوش آمدید',
@@ -178,11 +180,11 @@ export const fa: Language = {
         gemini: {
             emptyResponse: 'پاسخ خالی از هوش مصنوعی دریافت شد.',
             invalidQuestionArray: 'هوش مصنوعی آرایه معتبری از سوالات را برنگرداند.',
-            generateFailed: 'خطا در تولید سوالات جدید با Gemini: {error}',
+            generateFailed: 'خطا در تولید سوالات جدید با Gemini API. خطا: {error}',
             invalidValidationFormat: 'اعتبارسنجی هوش مصنوعی فرمت داده نامعتبر بازگرداند.',
-            validationFailed: 'خطا در اعتبارسنجی سوالات با Gemini: {error}',
+            validationFailed: 'خطا در اعتبارسنجی سوالات با Gemini API. خطا: {error}',
             emptyAnalysis: 'پاسخ تحلیل خالی از API دریافت شد.',
-            analysisFailed: 'خطا در تحلیل نتایج با Gemini: {error}',
+            analysisFailed: 'خطا در تحلیل نتایج با Gemini API. خطا: {error}',
         },
     },
     common: {

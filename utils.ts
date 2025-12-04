@@ -5,7 +5,7 @@
  * @param type - 'QB' for Question Bank, 'R' for Results.
  * @returns A formatted validation code string.
  */
-export const generateValidationCode = (type: 'QB' | 'R'): string => {
+export const generateValidationCode = (type) => {
     const now = new Date();
     const YYYY = now.getFullYear();
     const MM = String(now.getMonth() + 1).padStart(2, '0');
@@ -23,7 +23,7 @@ export const generateValidationCode = (type: 'QB' | 'R'): string => {
  * @param text The string to normalize.
  * @returns The normalized string.
  */
-export const normalizeText = (text: string): string => {
+export const normalizeText = (text) => {
     if (typeof text !== 'string') return '';
     return text.trim().replace(/\s+/g, ' ').toLowerCase();
 };
@@ -37,7 +37,7 @@ export const normalizeText = (text: string): string => {
  * @param salt A secret string to add to the hash.
  * @returns An obfuscated string.
  */
-export const simpleHash = (text: string, salt: string): string => {
+export const simpleHash = (text, salt) => {
     if (typeof text !== 'string' || typeof salt !== 'string') return '';
     const saltedText = salt + text + salt;
     try {

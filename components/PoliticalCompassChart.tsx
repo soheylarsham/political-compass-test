@@ -1,15 +1,9 @@
 
 import React from 'react';
 import { ScatterChart, Scatter, XAxis, YAxis, ZAxis, CartesianGrid, Tooltip, ResponsiveContainer, Label, ReferenceLine } from 'recharts';
-import { useI18n } from '../contexts/I18nContext';
+import { useI18n } from '../contexts/I18nContext.tsx';
 
-interface ChartProps {
-  data: {
-    economic: number;
-    social: number;
-  };
-}
-
+// FIX: Add 'any' type to props to satisfy TypeScript, as props are injected by Recharts.
 const CustomTooltip = ({ active, payload }: any) => {
   const { t } = useI18n();
   if (active && payload && payload.length) {
@@ -24,7 +18,7 @@ const CustomTooltip = ({ active, payload }: any) => {
 };
 
 
-const PoliticalCompassChart: React.FC<ChartProps> = ({ data }) => {
+const PoliticalCompassChart = ({ data }) => {
   const chartData = [{ x: data.economic, y: data.social, z: 200 }];
   const { t } = useI18n();
 

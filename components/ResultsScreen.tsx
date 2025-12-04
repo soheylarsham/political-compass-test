@@ -1,30 +1,21 @@
+
 import React, { useRef, useState } from 'react';
-import PoliticalCompassChart from './PoliticalCompassChart';
-import ScorePieChart from './ScorePieChart';
-import { type AnalysisResult, type QuizLevel, type UserAnswer } from '../types';
-import { ShareIcon, LinkIcon, ClipboardIcon, ChevronDownIcon, DocumentArrowDownIcon } from './Icons';
-import { generateValidationCode } from '../utils';
-import { useI18n } from '../contexts/I18nContext';
+import PoliticalCompassChart from './PoliticalCompassChart.tsx';
+import ScorePieChart from './ScorePieChart.tsx';
+import { ShareIcon, LinkIcon, ClipboardIcon, ChevronDownIcon, DocumentArrowDownIcon } from './Icons.tsx';
+import { generateValidationCode } from '../utils.ts';
+import { useI18n } from '../contexts/I18nContext.tsx';
 
-interface ResultsScreenProps {
-  result: AnalysisResult;
-  level: QuizLevel;
-  answers: UserAnswer[];
-  onNextLevel: () => void;
-  onReset: () => void;
-  isLastLevel: boolean;
-}
-
-const ResultsScreen: React.FC<ResultsScreenProps> = ({ result, level, answers, onNextLevel, onReset, isLastLevel }) => {
-    const chartRef = useRef<HTMLDivElement>(null);
+const ResultsScreen = ({ result, level, answers, onNextLevel, onReset, isLastLevel }) => {
+    const chartRef = useRef(null);
     const [showExportMenu, setShowExportMenu] = useState(false);
     const { t, language } = useI18n();
-    const currentLang = language as 'fa' | 'en';
+    const currentLang = language;
 
     const [copyLinkStatus, setCopyLinkStatus] = useState(t('results.copyLink'));
     const [copyResultStatus, setCopyResultStatus] = useState(t('results.copyResults'));
     
-    const createDownload = (data: string, filename: string, type: string) => {
+    const createDownload = (data, filename, type) => {
         const blob = new Blob([data], { type });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -36,6 +27,7 @@ const ResultsScreen: React.FC<ResultsScreenProps> = ({ result, level, answers, o
         URL.revokeObjectURL(url);
     };
 
+    // FIX: Make validationCode parameter optional to allow calls without arguments.
     const generateTextSummary = (validationCode?: string) => {
       const header = validationCode ? `Validation Code: ${validationCode}\n` : '';
       return `
@@ -56,7 +48,7 @@ ${result.detailedAnalysis}
       `.trim();
     }
     
-    const handleExport = async (format: 'image' | 'json' | 'txt' | 'csv' | 'html' | 'doc') => {
+    const handleExport = async (format) => {
         setShowExportMenu(false);
         const validationCode = generateValidationCode('R');
         const stateToExport = { answers, result, level };

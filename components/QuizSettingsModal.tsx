@@ -1,21 +1,14 @@
 
 import React, { useState } from 'react';
-import { type QuizConfig } from '../types';
 import { 
     MINIMUM_QUESTIONS_FOR_ANY_ANALYSIS,
     RECOMMENDED_QUESTIONS_FOR_BASIC_ANALYSIS,
     RECOMMENDED_QUESTIONS_FOR_ACCURATE_ANALYSIS
-} from '../constants';
-import { useI18n } from '../contexts/I18nContext';
+} from '../constants.ts';
+import { useI18n } from '../contexts/I18nContext.tsx';
 
-interface QuizSettingsModalProps {
-    initialConfig: QuizConfig;
-    onSave: (newConfig: QuizConfig) => void;
-    onClose: () => void;
-}
-
-const QuizSettingsModal: React.FC<QuizSettingsModalProps> = ({ initialConfig, onSave, onClose }) => {
-    const [config, setConfig] = useState<QuizConfig>(initialConfig);
+const QuizSettingsModal = ({ initialConfig, onSave, onClose }) => {
+    const [config, setConfig] = useState(initialConfig);
     const { t } = useI18n();
 
     const handleSave = () => {
@@ -49,7 +42,7 @@ const QuizSettingsModal: React.FC<QuizSettingsModalProps> = ({ initialConfig, on
                     <div>
                         <label htmlFor="levels" className="block text-lg font-medium text-gray-300">{t('settings.levelsLabel')}</label>
                         <div className="flex justify-around items-center bg-gray-900/50 p-2 rounded-lg mt-2">
-                            {([1, 2, 3] as const).map(level => (
+                            {([1, 2, 3]).map(level => (
                                 <button
                                     key={level}
                                     onClick={() => setConfig(c => ({...c, numberOfLevels: level}))}

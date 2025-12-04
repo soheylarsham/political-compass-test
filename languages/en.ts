@@ -1,4 +1,5 @@
-import { type Language } from "../types";
+
+import { type Language } from "../types.ts";
 
 export const en: Language = {
   langCode: 'en',
@@ -10,6 +11,7 @@ export const en: Language = {
     header: {
       title: 'Your Political Compass',
       resetButton: 'Restart',
+      homeButton: 'Home',
     },
     welcomeScreen: {
       title: 'Welcome to the Political Compass Test',

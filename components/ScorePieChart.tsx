@@ -1,17 +1,12 @@
 
 import React from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { useI18n } from '../contexts/I18nContext';
-
-interface ScorePieChartProps {
-  economicScore: number;
-  socialScore: number;
-}
+import { useI18n } from '../contexts/I18nContext.tsx';
 
 const COLORS_ECONOMIC = ['#f43f5e', '#3b82f6']; // Left (Rose), Right (Blue)
 const COLORS_SOCIAL = ['#10b981', '#f97316']; // Libertarian (Green), Authoritarian (Orange)
 
-const ScorePieChart: React.FC<ScorePieChartProps> = ({ economicScore, socialScore }) => {
+const ScorePieChart = ({ economicScore, socialScore }) => {
   const { t } = useI18n();
 
   const economicData = [
@@ -24,6 +19,7 @@ const ScorePieChart: React.FC<ScorePieChartProps> = ({ economicScore, socialScor
     { name: t('results.chart.authoritarian'), value: Math.max(0, socialScore) },
   ].filter(d => d.value > 0);
 
+  // FIX: Add 'any' type to props to satisfy TypeScript, as props are injected by Recharts.
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       return (
@@ -35,7 +31,7 @@ const ScorePieChart: React.FC<ScorePieChartProps> = ({ economicScore, socialScor
     return null;
   };
   
-  const renderColorfulLegendText = (value: string, entry: any) => {
+  const renderColorfulLegendText = (value, entry) => {
     const { color } = entry;
     return <span style={{ color, filter: `drop-shadow(0 0 2px ${color})` }}>{value}</span>;
   };

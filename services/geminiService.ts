@@ -1,6 +1,5 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
-import { type UserAnswer, type AnalysisResult, type Question, MultilingualText } from '../types';
-import type { TFunction } from '../contexts/I18nContext';
 
 const API_KEY = process.env.API_KEY;
 
@@ -12,11 +11,12 @@ const ai = new GoogleGenAI({ apiKey: API_KEY });
 
 const model = 'gemini-2.5-pro';
 
-const cleanJsonString = (str: string): string => {
+const cleanJsonString = (str) => {
+    if (!str) return '';
     return str.replace(/^```json\s*/, '').replace(/```$/, '').trim();
 }
 
-const shuffleArray = <T>(array: T[]): T[] => {
+const shuffleArray = (array) => {
     const newArray = [...array];
     for (let i = newArray.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -25,7 +25,7 @@ const shuffleArray = <T>(array: T[]): T[] => {
     return newArray;
 };
 
-export const generateQuestions = (allQuestionsForLevel: Question[], questionsPerLevel: number, t: TFunction): Question[] => {
+export const generateQuestions = (allQuestionsForLevel, questionsPerLevel, t) => {
     const enabledQuestions = allQuestionsForLevel.filter(q => q.enabled);
     
     if (enabledQuestions.length < questionsPerLevel) {
@@ -37,7 +37,7 @@ export const generateQuestions = (allQuestionsForLevel: Question[], questionsPer
 };
 
 
-export const generateMultipleQuestionsFromAI = async (count: number, existingQuestionTexts: string[], t: TFunction, lang: 'fa' | 'en'): Promise<{ question: string; options: { text: string; economicScore: number; socialScore: number; }[] }[]> => {
+export const generateMultipleQuestionsFromAI = async (count, existingQuestionTexts, t, lang) => {
     const languageName = lang === 'fa' ? 'PERSIAN' : 'ENGLISH';
     const prompt = `
         Please generate a JSON array containing exactly ${count} new, high-quality, and thought-provoking political compass questions in ${languageName}.
@@ -89,7 +89,7 @@ export const generateMultipleQuestionsFromAI = async (count: number, existingQue
         if (!jsonString) {
             throw new Error(t('errors.gemini.emptyResponse'));
         }
-        const newQuestions: { question: string; options: { text: string; economicScore: number; socialScore: number; }[] }[] = JSON.parse(jsonString);
+        const newQuestions = JSON.parse(jsonString);
 
         if (!Array.isArray(newQuestions) || newQuestions.length === 0) {
             throw new Error(t('errors.gemini.invalidQuestionArray'));
@@ -104,7 +104,7 @@ export const generateMultipleQuestionsFromAI = async (count: number, existingQue
 };
 
 
-export const validateQuestionsRelevancy = async (questions: {id: string, question: MultilingualText}[], t: TFunction): Promise<string[]> => {
+export const validateQuestionsRelevancy = async (questions, t) => {
     // Standardize on English for validation to ensure consistent AI analysis
     const questionsForValidation = questions.map(q => ({id: q.id, question: q.question.en}));
 
@@ -138,7 +138,7 @@ export const validateQuestionsRelevancy = async (questions: {id: string, questio
         if (!jsonString) {
             return [];
         }
-        const irrelevantIds: string[] = JSON.parse(jsonString);
+        const irrelevantIds = JSON.parse(jsonString);
 
         if (!Array.isArray(irrelevantIds)) {
             throw new Error(t('errors.gemini.invalidValidationFormat'));
@@ -152,7 +152,7 @@ export const validateQuestionsRelevancy = async (questions: {id: string, questio
 };
 
 
-export const analyzeAnswers = async (answers: UserAnswer[], t: TFunction): Promise<AnalysisResult> => {
+export const analyzeAnswers = async (answers, t, lang) => {
     let totalEconomicScore = 0;
     let totalSocialScore = 0;
     let maxPossibleScore = 0;
@@ -175,16 +175,20 @@ export const analyzeAnswers = async (answers: UserAnswer[], t: TFunction): Promi
 
     const finalEconomic = (totalEconomicScore / maxPossibleScore) * 10;
     const finalSocial = (totalSocialScore / maxPossibleScore) * 10;
+    
+    const languageName = lang === 'fa' ? 'PERSIAN' : 'ENGLISH';
 
-    // The prompt to Gemini must be in a language it understands well for this task.
-    // For consistency and quality, we keep the prompt in Persian, as originally designed.
     const prompt = `
-        Analyze the following political compass scores and provide a detailed, neutral, and academic political analysis in PERSIAN.
+        Analyze the following political compass scores and provide a detailed, neutral, and academic political analysis in ${languageName}.
         Scores:
         - Economic Axis: ${finalEconomic.toFixed(2)} (Left: -10, Right: +10)
         - Social Axis: ${finalSocial.toFixed(2)} (Libertarian: -10, Authoritarian: +10)
         
-        Ensure all text is in PERSIAN.
+        Ensure all text is in ${languageName}.
+        The 'politicalIdeology' should be a concise term for the user's political ideology in ${languageName}.
+        The 'summary' should be a brief summary of the ideology in ${languageName}.
+        The 'detailedAnalysis' should be a comprehensive analysis of the user's political position in ${languageName}.
+        The 'behavioralTraits' should be an array of strings describing typical behavioral traits in ${languageName}.
     `;
     
     const schema = {
@@ -192,20 +196,20 @@ export const analyzeAnswers = async (answers: UserAnswer[], t: TFunction): Promi
         properties: {
             politicalIdeology: { 
                 type: Type.STRING,
-                description: 'The user\'s political ideology in Persian.'
+                description: `The user's political ideology in ${languageName}.`
             },
             summary: { 
                 type: Type.STRING,
-                description: 'A brief summary of the ideology in Persian.'
+                description: `A brief summary of the ideology in ${languageName}.`
             },
             detailedAnalysis: { 
                 type: Type.STRING,
-                description: 'A comprehensive analysis of the user\'s political position in Persian.'
+                description: `A comprehensive analysis of the user's political position in ${languageName}.`
             },
             behavioralTraits: {
                 type: Type.ARRAY,
                 items: { type: Type.STRING },
-                description: 'An array of strings describing typical behavioral traits in Persian.'
+                description: `An array of strings describing typical behavioral traits in ${languageName}.`
             },
         },
         required: ["politicalIdeology", "summary", "detailedAnalysis", "behavioralTraits"],
@@ -226,7 +230,7 @@ export const analyzeAnswers = async (answers: UserAnswer[], t: TFunction): Promi
         if (!jsonString) {
             throw new Error(t('errors.gemini.emptyAnalysis'));
         }
-        const analysis: Omit<AnalysisResult, 'scores'> = JSON.parse(jsonString);
+        const analysis = JSON.parse(jsonString);
 
         return {
             scores: { economic: finalEconomic, social: finalSocial },

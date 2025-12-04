@@ -1,11 +1,11 @@
+
 import { useState, useCallback, useMemo } from 'react';
-import { type AppError } from '../types';
 
 export const useErrorLog = () => {
-    const [errors, setErrors] = useState<AppError[]>([]);
+    const [errors, setErrors] = useState([]);
 
-    const addError = useCallback((message: string) => {
-        const newError: AppError = {
+    const addError = useCallback((message) => {
+        const newError = {
             id: Date.now(),
             message,
             timestamp: new Date().toLocaleTimeString('fa-IR'),
@@ -13,7 +13,7 @@ export const useErrorLog = () => {
         setErrors(prevErrors => [newError, ...prevErrors.slice(0, 9)]); // Keep max 10 errors
     }, []);
 
-    const removeError = useCallback((id: number) => {
+    const removeError = useCallback((id) => {
         setErrors(prevErrors => prevErrors.filter(error => error.id !== id));
     }, []);
 

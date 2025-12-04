@@ -1,8 +1,7 @@
-import { type Question, type QuizLevel } from '../types';
 
 // The `questionBank` constant holds raw data without `id` and `enabled` properties.
-// These are added during initialization in `useQuestionBank.ts`.
-export const questionBank: Record<QuizLevel, Omit<Question, 'id' | 'enabled'>[]> = {
+// These are added during initialization in `useQuestionBank.js`.
+export const questionBank = {
   1: [
     {
         question: { fa: 'به نظر شما، نقش دولت در تضمین عدالت اجتماعی چیست؟', en: 'In your opinion, what is the government\'s role in ensuring social justice?' },

@@ -1,32 +1,22 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
-import { analyzeAnswers } from '../services/geminiService';
-import { type Question, type UserAnswer, type AnalysisResult, type QuizLevel } from '../types';
-import { useI18n } from '../contexts/I18nContext';
+import { analyzeAnswers } from '../services/geminiService.ts';
+import { useI18n } from '../contexts/I18nContext.tsx';
 
-interface QuizScreenProps {
-  level: QuizLevel;
-  questions: Question[];
-  onComplete: (answers: UserAnswer[], result: AnalysisResult) => void;
-  onReset: () => void;
-  setIsLoading: (loading: boolean) => void;
-  addError: (error: string) => void;
-  setLoadingMessage: (message: string) => void;
-}
-
-const QuizScreen: React.FC<QuizScreenProps> = ({ level, questions, onComplete, onReset, setIsLoading, addError, setLoadingMessage }) => {
+const QuizScreen = ({ level, questions, onComplete, onReset, setIsLoading, addError, setLoadingMessage }) => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [answers, setAnswers] = useState<UserAnswer[]>([]);
+  const [answers, setAnswers] = useState([]);
   const { t, language } = useI18n();
-  const currentLang = language as 'fa' | 'en';
+  const currentLang = language;
 
   useEffect(() => {
     setCurrentQuestionIndex(0);
     setAnswers([]);
   }, [questions, level]);
 
-  const handleAnswer = useCallback(async (selectedOptionIndex: number) => {
+  const handleAnswer = useCallback(async (selectedOptionIndex) => {
     const currentQuestion = questions[currentQuestionIndex];
-    const newAnswer: UserAnswer = {
+    const newAnswer = {
       question: currentQuestion.question,
       selectedOption: currentQuestion.options[selectedOptionIndex],
     };
@@ -39,14 +29,14 @@ const QuizScreen: React.FC<QuizScreenProps> = ({ level, questions, onComplete, o
       setIsLoading(true);
       setLoadingMessage(t('loading.analyzing'));
       try {
-        const result = await analyzeAnswers(updatedAnswers, t);
+        const result = await analyzeAnswers(updatedAnswers, t, language);
         onComplete(updatedAnswers, result);
-      } catch (e: any) {
+      } catch (e) {
         addError(e.message || t('errors.unknown'));
         setIsLoading(false);
       }
     }
-  }, [answers, currentQuestionIndex, questions, onComplete, setIsLoading, addError, setLoadingMessage, t]);
+  }, [answers, currentQuestionIndex, questions, onComplete, setIsLoading, addError, setLoadingMessage, t, language]);
 
   if (questions.length === 0) {
     return null;
